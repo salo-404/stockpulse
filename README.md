@@ -6,6 +6,10 @@
 
 ## Screenshots
 
+### Login Page
+<img width="1862" height="938" alt="image" src="https://github.com/user-attachments/assets/2ce2be41-1004-497e-98d5-286a43508c42" />
+
+
 ### Dashboard — Portfolio Command Center
 <img width="1907" height="966" alt="image" src="https://github.com/user-attachments/assets/b241de68-8941-4a93-a58e-e7f3477233b7" />
 
