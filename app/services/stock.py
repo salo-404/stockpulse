@@ -1,20 +1,13 @@
-import httpx
-from app.config import ALPHA_VANTAGE_API_KEY
+import yfinance as yf
 
 async def get_stock_price(symbol: str) -> float:
-    url = f"https://www.alphavantage.co/query"
-    params ={
-         "function": "GLOBAL_QUOTE",
-        "symbol": symbol,
-        "apikey": ALPHA_VANTAGE_API_KEY
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url, params=params)
-        data = response.json()
-    
     try:
-        price = float(data["Global Quote"]["05. price"])
-        return price
-    except (KeyError, ValueError):
+        ticker = yf.Ticker(symbol)
+        data = ticker.fast_info
+        price = data.last_price
+        if price is None:
+            return None
+        return round(float(price), 2)
+    except Exception as e:
+        print(f"Error fetching price for {symbol}: {e}")
         return None

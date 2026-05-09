@@ -5,15 +5,48 @@ from app.models.portfolio import Portfolio
 from app.services.stock import get_stock_price
 from app.services.dependencies import get_current_user
 from app.models.user import User
+import yfinance as yf
 
 router = APIRouter(prefix="/stocks", tags=["Stocks"])
 
 @router.get("/price/{symbol}")
 async def get_price(symbol: str, current_user: User = Depends(get_current_user)):
-    price = await get_stock_price(symbol.upper())
+    symbol = symbol.upper()
+    price = await get_stock_price(symbol)
     if price is None:
         raise HTTPException(status_code=404, detail="Stock symbol not found")
-    return {"symbol": symbol.upper(), "price": price}
+
+    previous_close = None
+    try:
+        ticker = yf.Ticker(symbol)
+        fast_info = ticker.fast_info
+        previous_close = getattr(fast_info, "previous_close", None) or getattr(fast_info, "regular_market_previous_close", None)
+        if previous_close is None:
+            history = ticker.history(period="2d", interval="1d")
+            if not history.empty:
+                if len(history) > 1:
+                    previous_close = float(history["Close"].iloc[-2])
+                else:
+                    previous_close = float(history["Close"].iloc[-1])
+    except Exception:
+        previous_close = None
+
+    change = None
+    change_percent = None
+    direction = "flat"
+    if previous_close:
+        change = round(price - float(previous_close), 2)
+        change_percent = round((change / float(previous_close)) * 100, 2)
+        direction = "up" if change >= 0 else "down"
+
+    return {
+        "symbol": symbol,
+        "price": price,
+        "previous_close": round(float(previous_close), 2) if previous_close else None,
+        "change": change,
+        "change_percent": change_percent,
+        "direction": direction,
+    }
 
 @router.get("/portfolio/performance")
 async def get_portfolio_performance(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -40,6 +73,7 @@ async def get_portfolio_performance(db: Session = Depends(get_db), current_user:
         total_current_value += current_value
 
         result.append({
+            "id": holding.id,
             "symbol": holding.symbol,
             "shares": holding.shares,
             "buy_price": holding.buy_price,

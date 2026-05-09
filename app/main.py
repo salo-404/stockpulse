@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.security import HTTPBearer
+from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.models.user import User
 from app.models.portfolio import Portfolio
@@ -13,6 +14,14 @@ Base.metadata.create_all(bind=engine)
 security = HTTPBearer()
 
 app = FastAPI(title="StockPulse API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(auth_router)
 app.include_router(portfolio_router)
