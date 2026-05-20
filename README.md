@@ -249,6 +249,4 @@ Computer Science student at Notre Dame University (NDU), Lebanon.
 
 ---
 
-## License
 
-MIT License — free to use and modify.
